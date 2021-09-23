@@ -162,6 +162,26 @@ export default function () {
     addErrorCount(success);
     stopIterationOnFail('Move process to Feedback stage failed', success, res);
 
+    group('AppOwner uploads attachment and archive', function () {
+      
+      var orgToken= setUpData.getAltinnTokenForTTD();
+      //upload a upload attachment as app owner in feedback stage of the instance and verify response
+      res = appData.postData(orgToken, partyId, instanceId, 'feedback', pdfAttachment, 'pdf', appOwner, appName);
+      success = check(res, {
+        'Upload attachment in feedback stage status is 201': (r) => r.status === 201,
+      });
+      addErrorCount(success);
+      stopIterationOnFail('Upload attachment in feedback stage', success, res);
+
+      //Test to archive an instance in feedback stage as an app owner and verify response code to be 200
+      res = appProcess.putNextProcess(orgToken, partyId, instanceId, null, appOwner, appName);
+      success = check(res, {
+        'Archive the instance status is 200': (r) => r.status === 200,
+      });
+      addErrorCount(success);
+      stopIterationOnFail('Archive the instance', success, res);
+    });
+
     if (waitForTE != null && waitForTE > 0) {
       var sleptSeconds = 0;
       var stepSleepCounter = 1;
