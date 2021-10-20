@@ -2,6 +2,7 @@
 import { createTheme, createStyles, Grid, WithStyles, withStyles } from '@material-ui/core';
 import axios from 'axios';
 import * as React from 'react';
+import createVersionControlUrls, { IVersionControlUrls } from 'app-shared/utils/createVersionControlUrls';
 import { get, post } from '../utils/networking';
 import altinnTheme from '../theme/altinnStudioTheme';
 import { IAltinnWindow } from '../types';
@@ -60,6 +61,8 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
 
   public timeout: any;
 
+  public urls: IVersionControlUrls;
+
   constructor(_props: IVersionControlHeaderProps) {
     super(_props);
     this.state = {
@@ -73,6 +76,8 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       cloneModalOpen: false,
       cloneModalAnchor: null,
     };
+    const { org, app } = window as Window as IAltinnWindow;
+    this.urls = createVersionControlUrls(org, app);
   }
 
   public componentDidMount() {
@@ -93,8 +98,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
   }
 
   public getRepoPermissions = async () => {
-    const { org, app } = window as Window as IAltinnWindow;
-    const url = `${window.location.origin}/designerapi/Repository/GetRepository?org=${org}&repository=${app}`;
+    const url = this.urls.repository;
 
     try {
       const currentRepo = await get(url, { cancelToken: this.source.token });
@@ -114,8 +118,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
   }
 
   public getStatus(callbackFunc?: any) {
-    const { org, app } = window as Window as IAltinnWindow;
-    const url = `${window.location.origin}/designerapi/Repository/RepoStatus?org=${org}&repository=${app}`;
+    const url = this.urls.status;
     get(url).then((result: any) => {
       if (this.componentIsMounted) {
         this.setState({
@@ -145,9 +148,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
 
   public getLastPush() {
     if (!this.state.moreThanAnHourSinceLastPush) {
-      const { org, app } = window as Window as IAltinnWindow;
-      // eslint-disable-next-line max-len
-      const url = `${window.location.origin}/designerapi/Repository/GetLatestCommitFromCurrentUser?org=${org}&repository=${app}`;
+      const url = this.urls.latestCommit;
       get(url).then((result: any) => {
         if (this.componentIsMounted && result) {
           const diff = new Date().getTime() - new Date(result.comitter.when).getTime();
@@ -183,8 +184,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     });
 
-    const { org, app } = window as Window as IAltinnWindow;
-    const url = `${window.location.origin}/designerapi/Repository/Pull?org=${org}&repository=${app}`;
+    const url = this.urls.pull;
 
     get(url).then((result: any) => {
       if (this.componentIsMounted) {
@@ -291,7 +291,9 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         modalState: {
           header: getLanguageFromKey('sync_header.sharing_changes_no_access', this.props.language),
           // eslint-disable-next-line max-len
-          descriptionText: [getLanguageFromKey('sync_header.sharing_changes_no_access_submessage', this.props.language)],
+          descriptionText: [getLanguageFromKey(
+            'sync_header.sharing_changes_no_access_submessage', this.props.language,
+          )],
         },
       });
     }
@@ -305,8 +307,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     });
 
-    const { org, app } = window as Window as IAltinnWindow;
-    const url = `${window.location.origin}/designerapi/Repository/Push?org=${org}&repository=${app}`;
+    const url = this.urls.push;
 
     post(url).then((result: any) => {
       if (this.componentIsMounted) {
@@ -357,12 +358,12 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         'Content-Type': 'application/json',
       },
     };
-    const bodyData = JSON.stringify({ message: commitMessage, org, repository: app });
-
-    const url = `${window.location.origin}/designerapi/Repository/Commit`;
-    const pullUrl = `${window.location.origin}/designerapi/Repository/Pull?org=${org}&repository=${app}`;
-    post(url, bodyData, options).then(() => {
-      get(pullUrl).then((result: any) => {
+    const bodyData = JSON.stringify({
+      message: commitMessage, org, repository: app,
+    });
+    const urls = this.urls;
+    post(urls.commit, bodyData, options).then(() => {
+      get(urls.pull).then((result: any) => {
         if (this.componentIsMounted) {
           // if pull was successfull, show app updated message
           if (result.repositoryStatus === 'Ok') {
@@ -381,8 +382,9 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
               mergeConflict: true,
               modalState: {
                 header: getLanguageFromKey('sync_header.merge_conflict_occured', this.props.language),
-                // eslint-disable-next-line max-len
-                descriptionText: [getLanguageFromKey('sync_header.merge_conflict_occured_submessage', this.props.language)],
+                descriptionText: [getLanguageFromKey(
+                  'sync_header.merge_conflict_occured_submessage', this.props.language,
+                )],
                 btnText: getLanguageFromKey('sync_header.merge_conflict_btn', this.props.language),
                 btnMethod: this.forceRepoStatusCheck,
               },
@@ -530,5 +532,3 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
 }
 
 export default withStyles(styles)(VersionControlHeader);
-
-export const VersionControlContainer = withStyles(styles)(VersionControlHeader);

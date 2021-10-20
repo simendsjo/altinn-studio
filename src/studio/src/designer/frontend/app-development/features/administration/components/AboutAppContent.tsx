@@ -32,7 +32,7 @@ const setupClasses = makeStyles({
   },
 });
 
-const MainContent = (props: IMainContentProps): JSX.Element => {
+const AboutAppContent = (props: IMainContentProps): JSX.Element => {
   const classes = setupClasses();
   const urlParams = new URLSearchParams(`?${window.location.hash.split('?')[1]}`);
   const copiedApp = Boolean(urlParams.get('copiedApp'));
@@ -117,4 +117,4 @@ const MainContent = (props: IMainContentProps): JSX.Element => {
   );
 };
 
-export default MainContent;
+export default AboutAppContent;

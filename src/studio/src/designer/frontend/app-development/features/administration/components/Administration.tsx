@@ -12,7 +12,7 @@ import VersionControlHeader from 'app-shared/version-control/versionControlHeade
 import { ICommit, IRepository } from '../../../types/global';
 import { HandleServiceInformationActions } from '../handleServiceInformationSlice';
 import { fetchRepoStatus } from '../../handleMergeConflict/handleMergeConflictSlice';
-import MainContent from './MainContent';
+import AboutAppContent from './AboutAppContent';
 import SideMenuContent from './SideMenuContent';
 import { repoStatusUrl } from '../../../utils/urlHelper';
 
@@ -218,7 +218,7 @@ export class AdministrationComponent extends
 
   public RenderMainContent = () => {
     return (
-      <MainContent
+      <AboutAppContent
         editServiceName={this.state.editServiceName}
         handleEditServiceName={this.handleEditServiceName}
         language={this.props.language}
