@@ -87,14 +87,14 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     this.getStatus();
     this.getRepoPermissions();
     this.getLastPush();
-    window.addEventListener('message', this.changeToRepoOccured);
+    window.addEventListener('message', this.changeToRepoOccurred);
   }
 
   public componentWillUnmount() {
     clearInterval(this.interval);
     this.source.cancel('ComponentWillUnmount'); // Cancel the getRepoPermissions() get request
     clearTimeout(this.timeout);
-    window.removeEventListener('message', this.changeToRepoOccured);
+    window.removeEventListener('message', this.changeToRepoOccurred);
   }
 
   public getRepoPermissions = async () => {
@@ -161,7 +161,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     }
   }
 
-  public changeToRepoOccured = (event: any) => {
+  public changeToRepoOccurred = (event: any) => {
     if (event.data === postMessages.filesAreSaved && this.componentIsMounted) {
       this.getStatus();
     }
