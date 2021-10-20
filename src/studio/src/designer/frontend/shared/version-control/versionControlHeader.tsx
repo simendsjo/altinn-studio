@@ -469,8 +469,8 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     const type = this.props.type || 'header';
 
     return (
-      <React.Fragment>
-        {type === 'header' ? (
+      <>
+        {type === 'header' && (
           <Grid
             container={true}
             direction='row'
@@ -503,17 +503,19 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
             {this.renderSyncModalComponent()}
             {this.renderCloneModal()}
           </Grid>
-        ) : type === 'fetchButton' ? (
-          <React.Fragment>
+        ) }
+        {type === 'fetchButton' && (
+          <>
             <FetchChangesComponent
               changesInMaster={this.state.changesInMaster}
               fetchChanges={this.fetchChanges}
               language={this.props.language}
             />
             {this.renderSyncModalComponent()}
-          </React.Fragment>
-        ) : type === 'shareButton' ? (
-          <React.Fragment>
+          </>
+        )}
+        {type === 'shareButton' && (
+          <>
             <ShareChangesComponent
               buttonOnly={true}
               changesInLocalRepo={this.state.changesInLocalRepo}
@@ -524,9 +526,9 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
               shareChanges={this.shareChanges}
             />
             {this.renderSyncModalComponent()}
-          </React.Fragment>
-        ) : null}
-      </React.Fragment>
+          </>
+        )}
+      </>
     );
   }
 }
