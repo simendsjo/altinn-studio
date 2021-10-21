@@ -165,7 +165,7 @@ export default function () {
     if (waitForTE != null && waitForTE > 0) {
       var sleptSeconds = 0;
       var stepSleepCounter = 1;
-      for (var i = 1; i <= 10; i++) {
+      for (var i = 1; i <= 1000; i++) {
         sleep(stepSleepCounter);
         res = appProcess.getCurrentProcess(userToken, partyId, instanceId, appOwner, appName);
         success = check(res, {
@@ -175,7 +175,7 @@ export default function () {
         if (res.json('ended') != null) break;
 
         sleptSeconds = sleptSeconds + stepSleepCounter;
-        stepSleepCounter = stepSleepCounter * 2;
+        //stepSleepCounter = stepSleepCounter * 2;
         if (sleptSeconds >= waitForTE) stopIterationOnFail('Instance is not archived by TE', null, null);
       }
     }
