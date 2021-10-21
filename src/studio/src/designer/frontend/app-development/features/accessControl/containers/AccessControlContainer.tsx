@@ -9,6 +9,7 @@ import AltinnFormControlLabel from 'app-shared/components/AltinnFormControlLabel
 import altinnTheme from 'app-shared/theme/altinnStudioTheme';
 import { getLanguageFromKey } from 'app-shared/utils/language';
 import VersionControlHeader from 'app-shared/version-control/versionControlHeader';
+import { IAltinnWindow } from 'app-shared/types';
 import { ApplicationMetadataActions } from '../../../sharedResources/applicationMetadata/applicationMetadataSlice';
 import { makeGetApplicationMetadata } from '../../../sharedResources/applicationMetadata/selectors/applicationMetadataSelector';
 
@@ -220,11 +221,12 @@ export class AccessControlContainerClass extends React.Component<
   }
 
   public render() {
+    const { org, app } = window as Window as IAltinnWindow;
     return (
       <AltinnColumnLayout
         aboveColumnChildren={
           <div className={this.props.classes.versionControlHeaderMargin}>
-            <VersionControlHeader language={this.props.language} />
+            <VersionControlHeader org={org} repo={app} language={this.props.language} />
           </div>}
         sideMenuChildren={this.renderSideMenu()}
         header={getLanguageFromKey('access_control.header', this.props.language)}

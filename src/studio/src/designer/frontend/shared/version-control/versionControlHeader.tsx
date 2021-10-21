@@ -5,7 +5,6 @@ import * as React from 'react';
 import createVersionControlUrls, { IVersionControlUrls } from 'app-shared/utils/createVersionControlUrls';
 import { get, post } from '../utils/networking';
 import altinnTheme from '../theme/altinnStudioTheme';
-import { IAltinnWindow } from '../types';
 import { getLanguageFromKey } from '../utils/language';
 import postMessages from '../utils/postMessages';
 import FetchChangesComponent from './fetchChanges';
@@ -17,6 +16,8 @@ import SyncModalComponent from './syncModal';
 export interface IVersionControlHeaderProps extends WithStyles<typeof styles> {
   language: any;
   type?: 'fetchButton' | 'shareButton' | 'header';
+  org: string;
+  repo: string;
 }
 
 export interface IVersionControlHeaderState {
@@ -76,8 +77,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       cloneModalOpen: false,
       cloneModalAnchor: null,
     };
-    const { org, app } = window as Window as IAltinnWindow;
-    this.urls = createVersionControlUrls(org, app);
+    this.urls = createVersionControlUrls(this.props.org, this.props.repo);
   }
 
   public componentDidMount() {
@@ -351,7 +351,6 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     });
 
-    const { org, app } = window as Window as IAltinnWindow;
     const options = {
       headers: {
         Accept: 'application/json',
@@ -359,7 +358,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     };
     const bodyData = JSON.stringify({
-      message: commitMessage, org, repository: app,
+      message: commitMessage, org: this.props.org, repository: this.props.repo,
     });
     const urls = this.urls;
     post(urls.commit, bodyData, options).then(() => {
@@ -466,69 +465,39 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
 
   public render() {
     const { classes } = this.props;
-    const type = this.props.type || 'header';
-
     return (
-      <>
-        {type === 'header' && (
-          <Grid
-            container={true}
-            direction='row'
-            className={classes.headerStyling}
-            justify='flex-start'
-          >
-            <Grid item={true} style={{ marginRight: '24px' }}>
-              <CloneButton
-                onClick={this.openCloneModal}
-                buttonText={getLanguageFromKey('sync_header.clone', this.props.language)}
-              />
-            </Grid>
-            <Grid item={true} style={{ marginRight: '24px' }}>
-              <FetchChangesComponent
-                changesInMaster={this.state.changesInMaster}
-                fetchChanges={this.fetchChanges}
-                language={this.props.language}
-              />
-            </Grid>
-            <Grid item={true}>
-              <ShareChangesComponent
-                changesInLocalRepo={this.state.changesInLocalRepo}
-                hasMergeConflict={this.state.mergeConflict}
-                hasPushRight={this.state.hasPushRight}
-                language={this.props.language}
-                moreThanAnHourSinceLastPush={this.state.moreThanAnHourSinceLastPush}
-                shareChanges={this.shareChanges}
-              />
-            </Grid>
-            {this.renderSyncModalComponent()}
-            {this.renderCloneModal()}
-          </Grid>
-        ) }
-        {type === 'fetchButton' && (
-          <>
-            <FetchChangesComponent
-              changesInMaster={this.state.changesInMaster}
-              fetchChanges={this.fetchChanges}
-              language={this.props.language}
-            />
-            {this.renderSyncModalComponent()}
-          </>
-        )}
-        {type === 'shareButton' && (
-          <>
-            <ShareChangesComponent
-              buttonOnly={true}
-              changesInLocalRepo={this.state.changesInLocalRepo}
-              hasMergeConflict={this.state.mergeConflict}
-              hasPushRight={this.state.hasPushRight}
-              language={this.props.language}
-              moreThanAnHourSinceLastPush={this.state.moreThanAnHourSinceLastPush}
-              shareChanges={this.shareChanges}
-            />
-            {this.renderSyncModalComponent()}
-          </>
-        )}
-      </>
+      <Grid
+        container={true}
+        direction='row'
+        className={classes.headerStyling}
+        justify='flex-start'
+      >
+        <Grid item={true} style={{ marginRight: '24px' }}>
+          <CloneButton
+            onClick={this.openCloneModal}
+            buttonText={getLanguageFromKey('sync_header.clone', this.props.language)}
+          />
+        </Grid>
+        <Grid item={true} style={{ marginRight: '24px' }}>
+          <FetchChangesComponent
+            changesInMaster={this.state.changesInMaster}
+            fetchChanges={this.fetchChanges}
+            language={this.props.language}
+          />
+        </Grid>
+        <Grid item={true}>
+          <ShareChangesComponent
+            changesInLocalRepo={this.state.changesInLocalRepo}
+            hasMergeConflict={this.state.mergeConflict}
+            hasPushRight={this.state.hasPushRight}
+            language={this.props.language}
+            moreThanAnHourSinceLastPush={this.state.moreThanAnHourSinceLastPush}
+            shareChanges={this.shareChanges}
+          />
+        </Grid>
+        {this.renderSyncModalComponent()}
+        {this.renderCloneModal()}
+      </Grid>
     );
   }
 }

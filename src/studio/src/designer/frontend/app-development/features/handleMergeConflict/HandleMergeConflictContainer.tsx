@@ -10,6 +10,7 @@ import FileEditor from 'app-shared/file-editor/FileEditor';
 import altinnTheme from 'app-shared/theme/altinnStudioTheme';
 import { getLanguageFromKey } from 'app-shared/utils/language';
 import VersionControlHeader from 'app-shared/version-control/versionControlHeader';
+import { IAltinnWindow } from 'app-shared/types';
 import { makeGetRepoStatusSelector } from './handleMergeConflictSelectors';
 import HandleMergeConflictAbort from './components/HandleMergeConflictAbort';
 import HandleMergeConflictDiscardChanges from './components/HandleMergeConflictDiscardChanges';
@@ -104,7 +105,7 @@ export class HandleMergeConflictContainer extends
       repoStatus,
     } = this.props;
     const { selectedFile } = this.state;
-
+    const { org, app } = window as Window as IAltinnWindow;
     return (
       <React.Fragment>
         <MuiThemeProvider theme={theme}>
@@ -119,7 +120,7 @@ export class HandleMergeConflictContainer extends
                 item={true}
                 xs={12}
               >
-                {repoStatus.hasMergeConflict ? null : <VersionControlHeader language={language} />}
+                {repoStatus.hasMergeConflict ? null : <VersionControlHeader org={org} repo={app} language={language} />}
 
                 <Hidden smDown={true}>
                   <Typography variant='h1'>

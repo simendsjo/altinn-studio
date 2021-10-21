@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import FileEditor from 'app-shared/file-editor/FileEditor';
 import altinnTheme from 'app-shared/theme/altinnStudioTheme';
 import VersionControlHeader from 'app-shared/version-control/versionControlHeader';
+import { IAltinnWindow } from 'app-shared/types';
 import RightMenu from '../components/rightMenu/RightMenu';
 import { filterDataModelForIntellisense } from '../utils/datamodel';
 import DesignView from './DesignView';
@@ -186,6 +187,7 @@ function FormDesigner() {
     );
   };
 
+  const { org, app } = window as Window as IAltinnWindow;
   return (
     <DndProvider backend={HTML5Backend}>
       <div className={classes.root}>
@@ -207,7 +209,7 @@ function FormDesigner() {
             className={classes.mainContent} classes={{ item: classNames(classes.item) }}
           >
             <div className={classes.versionControlHeaderMargin}>
-              <VersionControlHeader language={language} />
+              <VersionControlHeader org={org} repo={app} language={language} />
             </div>
             <div className={classes.pageHeader}>
               <Typography classes={{ root: classes.pageHeaderText }}>

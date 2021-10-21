@@ -9,6 +9,7 @@ import AltinnSpinner from 'app-shared/components/AltinnSpinner';
 import altinnTheme from 'app-shared/theme/altinnStudioTheme';
 import { getLanguageFromKey } from 'app-shared/utils/language';
 import VersionControlHeader from 'app-shared/version-control/versionControlHeader';
+import { IAltinnWindow } from 'app-shared/types';
 import { ICommit, IRepository } from '../../../types/global';
 import { HandleServiceInformationActions } from '../handleServiceInformationSlice';
 import { fetchRepoStatus } from '../../handleMergeConflict/handleMergeConflictSlice';
@@ -245,9 +246,10 @@ export class AdministrationComponent extends
       serviceName !== null &&
       serviceDescription !== null &&
       serviceId !== null;
+    const { org, app } = window as Window as IAltinnWindow;
     const AboveColumnChildren = () => (
       <div className={classes.versionControlHeaderMargin}>
-        <VersionControlHeader language={this.props.language} />
+        <VersionControlHeader org={org} repo={app} language={this.props.language} />
       </div>
     );
     const SideMenuChildren = () => (
