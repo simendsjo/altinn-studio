@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { createTheme, createStyles, Grid, WithStyles, withStyles } from '@material-ui/core';
 import axios from 'axios';
 import * as React from 'react';
@@ -15,7 +14,6 @@ import SyncModalComponent from './syncModal';
 
 export interface IVersionControlHeaderProps extends WithStyles<typeof styles> {
   language: any;
-  type?: 'fetchButton' | 'shareButton' | 'header';
   org: string;
   repo: string;
 }
@@ -40,6 +38,10 @@ const styles = createStyles({
     paddingTop: 10,
   },
 });
+
+const statusHasMergeConflict = (result: any) => {
+  return result?.repositoryStatus === 'MergeConflict';
+};
 
 const initialModalState = {
   header: '',
@@ -84,9 +86,10 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     this.componentIsMounted = true;
     // check status every 5 min
     this.interval = setInterval(() => this.updateStateOnIntervals(), 300000);
-    this.getStatus();
-    this.getRepoPermissions();
-    this.getLastPush();
+    this.getStatus()
+      .then(this.getRepoPermissions)
+      .then(this.fetchLastCommit)
+      .then(this.updateState);
     window.addEventListener('message', this.changeToRepoOccurred);
   }
 
@@ -97,14 +100,26 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     window.removeEventListener('message', this.changeToRepoOccurred);
   }
 
-  public getRepoPermissions = async () => {
-    const url = this.urls.repository;
+  public async getStatus(): Promise<any> {
+    try {
+      const result = await this.fetchStatus();
+      return {
+        mergeConflict: statusHasMergeConflict(result),
+        changesInMaster: result.behindBy !== 0,
+        changesInLocalRepo: result.contentStatus.length > 0,
+      };
+    } catch (err) {
+      this.stopLoadingWhenLoadingFailed(err);
+    }
+    return undefined;
+  }
 
+  public getRepoPermissions = async (prevStatus: any) => {
+    let hasPushRight = false;
+    const url = this.urls.repository;
     try {
       const currentRepo = await get(url, { cancelToken: this.source.token });
-      this.setState({
-        hasPushRight: currentRepo.permissions.push,
-      });
+      hasPushRight = currentRepo.permissions.push;
     } catch (err) {
       if (axios.isCancel(err)) {
         // This is handy when debugging axios cancelations when unmounting
@@ -115,55 +130,16 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         console.error('getRepoPermissions failed', err);
       }
     }
-  }
-
-  public getStatus(callbackFunc?: any) {
-    const url = this.urls.status;
-    get(url).then((result: any) => {
-      if (this.componentIsMounted) {
-        this.setState({
-          mergeConflict: result.repositoryStatus === 'MergeConflict',
-        });
-        if (callbackFunc) {
-          callbackFunc(result);
-        } else if (result) {
-          this.setState({
-            changesInMaster: result.behindBy !== 0,
-            changesInLocalRepo: result.contentStatus.length > 0,
-          });
-        }
-      }
-    })
-      .catch(() => {
-        if (this.state.modalState.isLoading) {
-          this.setState((prevState) => ({
-            modalState: {
-              header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
-              isLoading: !prevState.modalState.isLoading,
-            },
-          }));
-        }
-      });
-  }
-
-  public getLastPush() {
-    if (!this.state.moreThanAnHourSinceLastPush) {
-      const url = this.urls.latestCommit;
-      get(url).then((result: any) => {
-        if (this.componentIsMounted && result) {
-          const diff = new Date().getTime() - new Date(result.comitter.when).getTime();
-          const oneHour = 60 * 60 * 1000;
-          this.setState({
-            moreThanAnHourSinceLastPush: oneHour < diff,
-          });
-        }
-      });
-    }
-  }
+    return {
+      ...prevStatus,
+      hasPushRight,
+    };
+  };
 
   public changeToRepoOccurred = (event: any) => {
     if (event.data === postMessages.filesAreSaved && this.componentIsMounted) {
-      this.getStatus();
+      this.getStatus()
+        .then(this.updateState);
     }
   }
 
@@ -220,55 +196,42 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         }
       }
     })
-      .catch(() => {
-        if (this.state.modalState.isLoading) {
-          this.setState((prevState) => ({
-            modalState: {
-              header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
-              isLoading: !prevState.modalState.isLoading,
-            },
-          }));
-        }
-      });
+      .catch(this.stopLoadingWhenLoadingFailed);
   }
 
   public shareChanges = (currentTarget: any, showNothingToPush: boolean) => {
+    const newState: {
+      anchorEl: any,
+      modalState?: any,
+    } = {
+      anchorEl: currentTarget,
+    };
     if (showNothingToPush) {
-      this.setState({
-        anchorEl: currentTarget,
-        modalState: {
-          shouldShowDoneIcon: true,
-          header: getLanguageFromKey('sync_header.nothing_to_push', this.props.language),
-        },
-      });
+      newState.modalState = {
+        shouldShowDoneIcon: true,
+        header: getLanguageFromKey('sync_header.nothing_to_push', this.props.language),
+      };
     }
     if (this.state.hasPushRight === true) {
-      this.setState({
-        anchorEl: currentTarget,
-        modalState: {
-          header: getLanguageFromKey('sync_header.controlling_service_status', this.props.language),
-          isLoading: true,
-        },
-      });
-      this.getStatus((result: any) => {
-        if (result) {
-          // if user is ahead with no changes to commit, show share changes modal
-          if (result.aheadBy > 0 && result.contentStatus.length === 0) {
-            this.setState({
-              anchorEl: currentTarget,
-              modalState: {
+      newState.modalState = {
+        header: getLanguageFromKey('sync_header.controlling_service_status', this.props.language),
+        isLoading: true,
+      };
+      this.fetchStatus()
+        .then((result: any) => {
+          if (result) {
+            // if user is ahead with no changes to commit, show share changes modal
+            if (result.aheadBy > 0 && result.contentStatus.length === 0) {
+              newState.modalState = {
                 header: getLanguageFromKey('sync_header.validation_completed', this.props.language),
                 btnText: getLanguageFromKey('sync_header.share_changes', this.props.language),
                 shouldShowDoneIcon: true,
                 isLoading: false,
                 btnMethod: this.pushChanges,
-              },
-            });
-          } else {
-            // if user has changes to share, show write commit message modal
-            this.setState({
-              anchorEl: currentTarget,
-              modalState: {
+              };
+            } else {
+              // if user has changes to share, show write commit message modal
+              newState.modalState = {
                 header: getLanguageFromKey('sync_header.describe_and_validate', this.props.language),
                 descriptionText:
                   [
@@ -279,24 +242,21 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
                 shouldShowCommitBox: true,
                 isLoading: false,
                 btnMethod: this.commitChanges,
-              },
-            });
+              };
+            }
           }
-        }
-      });
-    } else if (this.state.hasPushRight === false) {
+        });
+    } else if (!this.state.hasPushRight) {
       // if user don't have push rights, show modal stating no access to share changes
-      this.setState({
-        anchorEl: currentTarget,
-        modalState: {
-          header: getLanguageFromKey('sync_header.sharing_changes_no_access', this.props.language),
-          // eslint-disable-next-line max-len
-          descriptionText: [getLanguageFromKey(
-            'sync_header.sharing_changes_no_access_submessage', this.props.language,
-          )],
-        },
-      });
+      newState.modalState = {
+        header: getLanguageFromKey('sync_header.sharing_changes_no_access', this.props.language),
+        // eslint-disable-next-line max-len
+        descriptionText: [getLanguageFromKey(
+          'sync_header.sharing_changes_no_access_submessage', this.props.language,
+        )],
+      };
     }
+    this.updateState(newState);
   }
 
   public pushChanges = () => {
@@ -329,16 +289,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         }
       }
     })
-      .catch(() => {
-        if (this.state.modalState.isLoading) {
-          this.setState((prevState) => ({
-            modalState: {
-              header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
-              isLoading: !prevState.modalState.isLoading,
-            },
-          }));
-        }
-      });
+      .catch(this.stopLoadingWhenLoadingFailed);
     this.forceRepoStatusCheck();
   }
 
@@ -391,27 +342,9 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
           }
         }
       })
-        .catch(() => {
-          if (this.state.modalState.isLoading) {
-            this.setState((prevState) => ({
-              modalState: {
-                header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
-                isLoading: !prevState.modalState.isLoading,
-              },
-            }));
-          }
-        });
+        .catch(this.stopLoadingWhenLoadingFailed);
     })
-      .catch(() => {
-        if (this.state.modalState.isLoading) {
-          this.setState((prevState) => ({
-            modalState: {
-              header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
-              isLoading: !prevState.modalState.isLoading,
-            },
-          }));
-        }
-      });
+      .catch(this.stopLoadingWhenLoadingFailed);
   }
 
   public forceRepoStatusCheck = () => {
@@ -458,16 +391,54 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     });
   }
 
+  public async fetchLastCommit(state: any) {
+    if (!this.state.moreThanAnHourSinceLastPush) {
+      const result = await get(this.urls.latestCommit);
+      if (result) {
+        const diff = new Date().getTime() - new Date(result.comitter.when).getTime();
+        const oneHour = 60 * 60 * 1000;
+        return {
+          ...state,
+          moreThanAnHourSinceLastPush: oneHour < diff,
+        };
+      }
+    }
+    return state;
+  }
+
+  public async fetchStatus() {
+    return get(this.urls.status);
+  }
+
+  private updateState(state: any) {
+    if (state && Object.keys(state).length) {
+      this.setState((prev: any) => ({
+        ...prev, ...state,
+      }));
+    }
+  }
+
   public updateStateOnIntervals() {
-    this.getStatus();
-    this.getLastPush();
+    this.getStatus().then(this.fetchLastCommit).then(this.updateState);
+  }
+
+  private stopLoadingWhenLoadingFailed(err: any) {
+    console.error('Failed to load in version control header', this.state.modalState.isLoading, err);
+    if (this.state.modalState.isLoading) {
+      this.setState(() => ({
+        modalState: {
+          header: getLanguageFromKey('sync_header.repo_is_offline', this.props.language),
+          isLoading: false,
+        },
+      }));
+    }
   }
 
   public render() {
     const { classes } = this.props;
     return (
       <Grid
-        container={true}
+        container
         direction='row'
         className={classes.headerStyling}
         justify='flex-start'
