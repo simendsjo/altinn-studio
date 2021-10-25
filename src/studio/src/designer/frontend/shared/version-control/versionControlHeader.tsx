@@ -21,8 +21,7 @@ export interface IVersionControlHeaderProps extends WithStyles<typeof styles> {
 export interface IVersionControlHeaderState {
   changesInMaster: boolean;
   changesInLocalRepo: boolean;
-  moreThanAnHourSinceLastPush: boolean;
-  hasPushRight: boolean;
+  hasPushRights: boolean;
   anchorEl: any;
   modalState: any;
   mergeConflict: boolean;
@@ -71,8 +70,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     this.state = {
       changesInMaster: false,
       changesInLocalRepo: false,
-      moreThanAnHourSinceLastPush: false,
-      hasPushRight: null,
+      hasPushRights: false,
       anchorEl: null,
       mergeConflict: false,
       modalState: initialModalState,
@@ -83,13 +81,12 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
   }
 
   public componentDidMount() {
-    this.componentIsMounted = true;
     // check status every 5 min
     this.interval = setInterval(() => this.updateStateOnIntervals(), 300000);
+    this.componentIsMounted = true;
     this.getStatus()
       .then(this.getRepoPermissions)
-      .then(this.fetchLastCommit)
-      .then(this.updateState);
+      .then(this.updateState.bind(this));
     window.addEventListener('message', this.changeToRepoOccurred);
   }
 
@@ -115,11 +112,10 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
   }
 
   public getRepoPermissions = async (prevStatus: any) => {
-    let hasPushRight = false;
-    const url = this.urls.repository;
+    let hasPushRights = false;
     try {
-      const currentRepo = await get(url, { cancelToken: this.source.token });
-      hasPushRight = currentRepo.permissions.push;
+      const currentRepo = await get(this.urls.repository, { cancelToken: this.source.token });
+      hasPushRights = currentRepo.permissions.push;
     } catch (err) {
       if (axios.isCancel(err)) {
         // This is handy when debugging axios cancelations when unmounting
@@ -132,14 +128,14 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     }
     return {
       ...prevStatus,
-      hasPushRight,
+      hasPushRights,
     };
   };
 
   public changeToRepoOccurred = (event: any) => {
     if (event.data === postMessages.filesAreSaved && this.componentIsMounted) {
       this.getStatus()
-        .then(this.updateState);
+        .then(this.updateState.bind(this));
     }
   }
 
@@ -160,9 +156,7 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     });
 
-    const url = this.urls.pull;
-
-    get(url).then((result: any) => {
+    get(this.urls.pull).then((result: any) => {
       if (this.componentIsMounted) {
         if (result.repositoryStatus === 'Ok') {
           // if pull was successfull, show app is updated message
@@ -212,7 +206,16 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
         header: getLanguageFromKey('sync_header.nothing_to_push', this.props.language),
       };
     }
-    if (this.state.hasPushRight === true) {
+    if (!this.state.hasPushRights) {
+      // if user don't have push rights, show modal stating no access to share changes
+      newState.modalState = {
+        header: getLanguageFromKey('sync_header.sharing_changes_no_access', this.props.language),
+        // eslint-disable-next-line max-len
+        descriptionText: [getLanguageFromKey(
+          'sync_header.sharing_changes_no_access_submessage', this.props.language,
+        )],
+      };
+    } else {
       newState.modalState = {
         header: getLanguageFromKey('sync_header.controlling_service_status', this.props.language),
         isLoading: true,
@@ -246,15 +249,6 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
             }
           }
         });
-    } else if (!this.state.hasPushRight) {
-      // if user don't have push rights, show modal stating no access to share changes
-      newState.modalState = {
-        header: getLanguageFromKey('sync_header.sharing_changes_no_access', this.props.language),
-        // eslint-disable-next-line max-len
-        descriptionText: [getLanguageFromKey(
-          'sync_header.sharing_changes_no_access_submessage', this.props.language,
-        )],
-      };
     }
     this.updateState(newState);
   }
@@ -267,15 +261,12 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
       },
     });
 
-    const url = this.urls.push;
-
-    post(url).then((result: any) => {
+    post(this.urls.push).then((result: any) => {
       if (this.componentIsMounted) {
         if (result.isSuccessStatusCode) {
           this.setState({
             changesInMaster: false,
             changesInLocalRepo: false,
-            moreThanAnHourSinceLastPush: true,
             modalState: {
               header: getLanguageFromKey('sync_header.sharing_changes_completed', this.props.language),
               descriptionText:
@@ -391,26 +382,11 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
     });
   }
 
-  public async fetchLastCommit(state: any) {
-    if (!this.state.moreThanAnHourSinceLastPush) {
-      const result = await get(this.urls.latestCommit);
-      if (result) {
-        const diff = new Date().getTime() - new Date(result.comitter.when).getTime();
-        const oneHour = 60 * 60 * 1000;
-        return {
-          ...state,
-          moreThanAnHourSinceLastPush: oneHour < diff,
-        };
-      }
-    }
-    return state;
-  }
-
   public async fetchStatus() {
     return get(this.urls.status);
   }
 
-  private updateState(state: any) {
+  public updateState(state: any) {
     if (state && Object.keys(state).length) {
       this.setState((prev: any) => ({
         ...prev, ...state,
@@ -419,10 +395,12 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
   }
 
   public updateStateOnIntervals() {
-    this.getStatus().then(this.fetchLastCommit).then(this.updateState);
+    if (this.componentIsMounted) {
+      this.getStatus().then(this.updateState.bind(this));
+    }
   }
 
-  private stopLoadingWhenLoadingFailed(err: any) {
+  public stopLoadingWhenLoadingFailed(err: any) {
     console.error('Failed to load in version control header', this.state.modalState.isLoading, err);
     if (this.state.modalState.isLoading) {
       this.setState(() => ({
@@ -460,9 +438,8 @@ class VersionControlHeader extends React.Component<IVersionControlHeaderProps, I
           <ShareChangesComponent
             changesInLocalRepo={this.state.changesInLocalRepo}
             hasMergeConflict={this.state.mergeConflict}
-            hasPushRight={this.state.hasPushRight}
+            hasPushRight={this.state.hasPushRights}
             language={this.props.language}
-            moreThanAnHourSinceLastPush={this.state.moreThanAnHourSinceLastPush}
             shareChanges={this.shareChanges}
           />
         </Grid>
