@@ -2,12 +2,11 @@ using System;
 using System.Net.Mime;
 using System.Text.Json.Serialization;
 
-namespace Altinn.App.PlatformServices.Models
+namespace Altinn.App.Domain.Models
 {
     /// <summary>
     /// Represents a cloud event. Based on CloudEvent: https://github.com/cloudevents/spec/blob/v1.0/spec.md.
     /// </summary>
-    [Obsolete("CloudEvent has been moved to a new namespace. Reference namespace Altinn.App.Domain.Models instead.")]
     public class CloudEvent
     {
         /// <summary>

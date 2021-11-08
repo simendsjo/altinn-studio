@@ -1,3 +1,4 @@
+using System;
 using System.Security.Claims;
 
 using AltinnCore.Authentication.Constants;
@@ -7,6 +8,7 @@ namespace Altinn.App.PlatformServices.Extensions
     /// <summary>
     /// This class holds a collection of extension methods for the <see cref="ClaimsPrincipal"/> class.
     /// </summary>
+    [Obsolete("ClaimsPrincipalExtensions has been moved to a new namespace. Reference namespace Altinn.App.Domain.Extensions instead.")]
     public static class ClaimsPrincipalExtensions
     {
         /// <summary>

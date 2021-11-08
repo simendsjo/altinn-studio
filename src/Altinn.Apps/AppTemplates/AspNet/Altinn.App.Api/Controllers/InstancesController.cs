@@ -13,6 +13,7 @@ using Altinn.App.Common.Constants;
 using Altinn.App.Common.Helpers;
 using Altinn.App.Common.RequestHandling;
 using Altinn.App.Common.Serialization;
+using Altinn.App.Domain.Models;
 using Altinn.App.PlatformServices.Extensions;
 using Altinn.App.PlatformServices.Helpers;
 using Altinn.App.PlatformServices.Interface;
@@ -54,7 +55,7 @@ namespace Altinn.App.Api.Controllers
     {
         private readonly ILogger<InstancesController> _logger;
 
-        private readonly IInstance _instanceClient;
+        private readonly Domain.Services.Interface.IInstanceService _instanceService;
         private readonly IData _dataClient;
         private readonly IRegister _registerClient;
         private readonly IEvents _eventsService;
@@ -76,7 +77,7 @@ namespace Altinn.App.Api.Controllers
         public InstancesController(
             ILogger<InstancesController> logger,
             IRegister registerClient,
-            IInstance instanceClient,
+            Domain.Services.Interface.IInstanceService instance,
             IData dataClient,
             IAppResources appResourcesService,
             IAltinnApp altinnApp,
@@ -88,7 +89,7 @@ namespace Altinn.App.Api.Controllers
             IProfile profileClient)
         {
             _logger = logger;
-            _instanceClient = instanceClient;
+            _instanceService = instance;
             _dataClient = dataClient;
             _appResourcesService = appResourcesService;
             _registerClient = registerClient;
@@ -120,31 +121,15 @@ namespace Altinn.App.Api.Controllers
             [FromRoute] int instanceOwnerPartyId,
             [FromRoute] Guid instanceGuid)
         {
-            EnforcementResult enforcementResult = await AuthorizeAction(org, app, instanceOwnerPartyId, instanceGuid, "read");
+            InstanceResponse response = await _instanceService.GetInstance(org, app, instanceOwnerPartyId, instanceGuid);
 
-            if (!enforcementResult.Authorized)
+            if (!response.Result.Successful)
             {
-                return Forbidden(enforcementResult);
+                return StatusCode((int)response.Result.StatusCode, response.Result.ErrorObject);
             }
 
-            try
-            {
-                Instance instance = await _instanceClient.GetInstance(app, org, instanceOwnerPartyId, instanceGuid);
-                SelfLinkHelper.SetInstanceAppSelfLinks(instance, Request);
-
-                string userOrgClaim = User.GetOrg();
-
-                if (userOrgClaim == null || !org.Equals(userOrgClaim, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    await _instanceClient.UpdateReadStatus(instanceOwnerPartyId, instanceGuid, "read");
-                }
-
-                return Ok(instance);
-            }
-            catch (Exception exception)
-            {
-                return ExceptionResponse(exception, $"Get instance {instanceOwnerPartyId}/{instanceGuid} failed");
-            }
+            Instance instance = response.Instance;
+            return Ok(instance);
         }
 
         /// <summary>
@@ -178,12 +163,6 @@ namespace Altinn.App.Api.Controllers
                 return BadRequest("The path parameter 'app' cannot be empty");
             }
 
-            Application application = _appResourcesService.GetApplication();
-            if (application == null)
-            {
-                return NotFound($"AppId {org}/{app} was not found");
-            }
-
             MultipartRequestReader parsedRequest = new MultipartRequestReader(Request);
             await parsedRequest.Read();
 
@@ -191,6 +170,9 @@ namespace Altinn.App.Api.Controllers
             {
                 return BadRequest($"Error when reading content: {JsonConvert.SerializeObject(parsedRequest.Errors)}");
             }
+
+            InstanceResponse response = _instanceService.CreateInstance(org, app, parsedRequest);
+
 
             Instance instanceTemplate = await ExtractInstanceTemplate(parsedRequest);
 
@@ -563,17 +545,16 @@ namespace Altinn.App.Api.Controllers
             [FromRoute] int instanceOwnerPartyId,
             [FromRoute] Guid instanceGuid)
         {
-            try
-            {
-                Instance instance = await _instanceClient.AddCompleteConfirmation(instanceOwnerPartyId, instanceGuid);
-                SelfLinkHelper.SetInstanceAppSelfLinks(instance, Request);
+            InstanceResponse response = await _instanceService.AddCompleteConfirmation(instanceOwnerPartyId, instanceGuid);
 
-                return Ok(instance);
-            }
-            catch (Exception exception)
+            if (!response.Result.Successful)
             {
-                return ExceptionResponse(exception, $"Adding complete confirmation to instance {instanceOwnerPartyId}/{instanceGuid} failed");
+                return StatusCode((int)response.Result.StatusCode, response.Result.ErrorObject);
             }
+
+            Instance instance = response.Instance;
+
+            return Ok(instance);
         }
 
         /// <summary>
@@ -602,27 +583,16 @@ namespace Altinn.App.Api.Controllers
                 return BadRequest($"Invalid sub status: {JsonConvert.SerializeObject(substatus)}. Substatus must be defined and include a label.");
             }
 
-            Instance instance = await _instanceClient.GetInstance(app, org, instanceOwnerPartyId, instanceGuid);
+            InstanceResponse response = await _instanceService.UpdateSubstatus(instanceOwnerPartyId, instanceGuid, substatus);
 
-            string orgClaim = User.GetOrg();
-            if (!instance.Org.Equals(orgClaim))
+            if (!response.Result.Successful)
             {
-                return Forbid();
+                return StatusCode((int)response.Result.StatusCode, response.Result.ErrorObject);
             }
 
-            try
-            {
-                Instance updatedInstance = await _instanceClient.UpdateSubstatus(instanceOwnerPartyId, instanceGuid, substatus);
-                SelfLinkHelper.SetInstanceAppSelfLinks(instance, Request);
+            Instance updatedInstance = response.Instance;
 
-                await RegisterEvent("app.instance.substatus.changed", instance);
-
-                return Ok(updatedInstance);
-            }
-            catch (Exception exception)
-            {
-                return ExceptionResponse(exception, $"Updating substatus for instance {instanceOwnerPartyId}/{instanceGuid} failed.");
-            }
+            return Ok(updatedInstance);
         }
 
         /// <summary>
@@ -641,17 +611,16 @@ namespace Altinn.App.Api.Controllers
             [FromRoute] Guid instanceGuid,
             [FromQuery] bool hard)
         {
-            try
-            {
-                Instance deletedInstance = await _instanceClient.DeleteInstance(instanceOwnerPartyId, instanceGuid, hard);
-                SelfLinkHelper.SetInstanceAppSelfLinks(deletedInstance, Request);
+            InstanceResponse response = await _instanceService.DeleteInstance(instanceOwnerPartyId, instanceGuid, hard);
 
-                return Ok(deletedInstance);
-            }
-            catch (Exception exception)
+            if (!response.Result.Successful)
             {
-                return ExceptionResponse(exception, $"Deleting instance {instanceOwnerPartyId}/{instanceGuid} failed.");
+                return StatusCode((int)response.Result.StatusCode, response.Result.ErrorObject);
             }
+
+            Instance deletedInstance = response.Instance;
+
+            return Ok(deletedInstance);
         }
 
         /// <summary>
@@ -675,7 +644,14 @@ namespace Altinn.App.Api.Controllers
                 { "status.isSoftDeleted", "false" }
             };
 
-            List<Instance> activeInstances = await _instanceClient.GetInstances(queryParams);
+            InstanceQueryResponse response = await _instanceService.GetInstances(queryParams);
+
+            if (!response.Result.Successful)
+            {
+                return StatusCode((int)response.Result.StatusCode, response.Result.ErrorObject);
+            }
+
+            List<Instance> activeInstances = response.Instances;
 
             if (!activeInstances.Any())
             {

@@ -1,5 +1,7 @@
 using System;
 
+using Altinn.App.Domain.Clients.Interface;
+using Altinn.App.Domain.Services.Implementation;
 using Altinn.App.PlatformServices.Filters;
 using Altinn.App.PlatformServices.Implementation;
 using Altinn.App.PlatformServices.Interface;
@@ -53,15 +55,28 @@ namespace Altinn.App.PlatformServices.Extensions
             services.AddHttpClient<IText, TextClient>();
             services.AddHttpClient<IProcess, ProcessAppSI>();
 
-            services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
-            services.Configure<GeneralSettings>(configuration.GetSection("GeneralSettings"));
+            // Platform Services
+            services.AddHttpClient<IInstanceClient, Clients.InstanceClient>();
+            services.AddHttpClient<IEventClient, Clients.EventClient>();
+
+            // Platform Configuraiton
             services.Configure<PlatformSettings>(configuration.GetSection("PlatformSettings"));
+
+            // Domain configuration
+            services.Configure<GeneralSettings>(configuration.GetSection("GeneralSettings"));
+            services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+
+            // Domain Services
+            services.AddScoped<Domain.Services.Interface.ILoggedInUser, LoggedInUser>();
+            services.AddScoped<Domain.Services.Interface.IInstanceService, InstanceService>(); // could this be singleton without causing trouble for the token extraction? 
+            services.AddSingleton<Domain.Services.Interface.IApplicationService, ApplicationService>();
+
         }
 
         /// <summary>
         /// Adds all the app services.
         /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection"/> being built.</param>
+        /// <param name="services">The <see cref="IServiceCollection"/> being  built.</param>
         /// <param name="configuration">A reference to the current <see cref="IConfiguration"/> object.</param>
         /// <param name="env">A reference to the current <see cref="IWebHostEnvironment"/> object.</param>
         public static void AddAppServices(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
