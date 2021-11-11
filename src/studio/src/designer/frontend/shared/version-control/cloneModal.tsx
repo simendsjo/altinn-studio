@@ -28,26 +28,23 @@ const styles = createStyles({
 
 export interface ICloneModalProps extends WithStyles<typeof styles> {
   anchorEl: Element;
-  onClose: any;
-  open: boolean;
+  onClose: () => void;
   language: any;
 }
 
 function CloneModal(props: ICloneModalProps) {
   const [hasDataModel, setHasDataModel] = React.useState(false);
 
-  const checkIfDataModelExists = async () => {
-    try { // dataModelXsdUrl does not resolve in unit-tests
-      const dataModel: any = await get(sharedUrls().dataModelXsdUrl);
-      setHasDataModel(dataModel != null);
-    } catch {
-      setHasDataModel(false);
-    }
+  const checkIfDataModelExists = () => {
+    // in unit-tests, sharedUrls will not have a location to get the org/repo from
+    get(sharedUrls().dataModelXsdUrl)
+      .then((dataModel) => setHasDataModel(dataModel != null))
+      .catch(() => setHasDataModel(false));
   };
 
   const copyGitUrl = () => {
     const textField = document.querySelector('#repository-url');
-    (textField as any).select();
+    (textField as HTMLInputElement).select();
     document.execCommand('copy');
   };
 
@@ -64,7 +61,7 @@ function CloneModal(props: ICloneModalProps) {
 
   return (
     <Popover
-      open={props.open}
+      open={!!props.anchorEl}
       anchorEl={props.anchorEl}
       onClose={props.onClose}
       anchorOrigin={{

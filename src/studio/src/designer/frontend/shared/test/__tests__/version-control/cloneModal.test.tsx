@@ -24,7 +24,7 @@ describe('>>> components/version-control/cloneModal.test.tsx', () => {
     });
     const wrapper = mount(
       <CloneModal
-        open={true} anchorEl={element}
+        anchorEl={element}
         onClose={(null)} language={{}}
         classes={mockClasses}
       />,
@@ -39,7 +39,7 @@ describe('>>> components/version-control/cloneModal.test.tsx', () => {
     });
     const wrapper = mount(
       <CloneModal
-        open={true} anchorEl={element}
+        anchorEl={element}
         onClose={(null)} language={{}}
         classes={mockClasses}
       />,

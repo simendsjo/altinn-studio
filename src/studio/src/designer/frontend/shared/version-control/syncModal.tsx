@@ -5,15 +5,15 @@ import altinnTheme from '../theme/altinnStudioTheme';
 
 export interface ISyncModalComponentProps {
   classes: any;
-  anchorEl: Element;
+  anchorEl?: Element;
   header?: string;
   descriptionText?: string[];
   isLoading?: boolean;
   shouldShowDoneIcon?: boolean;
   btnText?: string;
   shouldShowCommitBox?: boolean;
-  handleClose: any;
-  btnClick?: any;
+  handleClose: () => void;
+  btnClick?: (commitMessage?: string) => void;
 }
 
 export interface ISyncModalComponentState {
@@ -122,10 +122,9 @@ class SyncModalComponent extends React.Component<ISyncModalComponentProps, ISync
 
   public render() {
     const { classes } = this.props;
-    const open = Boolean(this.props.anchorEl);
     return (
       <Popover
-        open={open}
+        open={!!this.props.anchorEl}
         anchorEl={this.props.anchorEl}
         onClose={this.handleClose}
         anchorOrigin={{

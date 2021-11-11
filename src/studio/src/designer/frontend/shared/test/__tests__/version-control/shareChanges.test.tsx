@@ -8,14 +8,12 @@ jest.mock('react-truncate-markup');
 describe('>>> components/base/shareChanges.tsx --- Snapshot', () => {
   let mockShareChanges: any;
   let mockChangesInLocalRepo: boolean;
-  let mockHasPushRight: boolean;
   let mockHasMergeConflict: boolean;
   let mockLanguage: any;
 
   beforeEach(() => {
     mockShareChanges = jest.fn();
     mockChangesInLocalRepo = true;
-    mockHasPushRight = true;
     mockHasMergeConflict = false;
     mockLanguage = {};
   });
@@ -26,7 +24,6 @@ describe('>>> components/base/shareChanges.tsx --- Snapshot', () => {
         language={mockLanguage}
         shareChanges={mockShareChanges}
         changesInLocalRepo={mockChangesInLocalRepo}
-        hasPushRight={mockHasPushRight}
         hasMergeConflict={mockHasMergeConflict}
       />,
     );
