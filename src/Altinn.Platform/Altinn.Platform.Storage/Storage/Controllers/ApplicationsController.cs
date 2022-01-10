@@ -388,7 +388,7 @@ namespace Altinn.Platform.Storage.Controllers
                 return false;
             }
 
-            string appPattern = @"^[a-zæøå][a-zæøå0-9\-]*$";
+            string appPattern =  @"^(?!datamodels$)[a-z]+[a-z0-9-]+[a-z0-9]$";
             if (!Regex.IsMatch(parts[1], appPattern))
             {
                 return false;
