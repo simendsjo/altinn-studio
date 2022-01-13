@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Altinn.App.IntegrationTests;
 
 using App.IntegrationTests.Utils;
-using App.IntegrationTestsRef.Utils;
 
 using Xunit;
 
@@ -75,6 +74,19 @@ namespace App.IntegrationTests.ControllerTests
 
             // Verify that 
             Assert.Contains("DontChooseReportee=true", redirectUrl);
+        }
+
+        [Fact]
+        public async Task GetHome_Redirect_WithIssQueryParameters()
+        {
+            HttpClient client = SetupUtil.GetTestClient(_factory, "ttd", "model-validation");
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, "/tdd/endring-av-navn?DontChooseReportee=true&");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+            string redirectUrl = response.RequestMessage.RequestUri.ToString();
+
+            // Verify that 
+            Assert.Contains("iss=idporten", redirectUrl);
         }
 
         [Fact]

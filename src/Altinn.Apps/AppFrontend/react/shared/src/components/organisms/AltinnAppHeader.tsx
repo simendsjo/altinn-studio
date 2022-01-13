@@ -1,4 +1,4 @@
-// tslint:disable: object-literal-key-quotes
+
 import { AppBar, createStyles, Grid, Typography, withStyles, WithStyles } from '@material-ui/core';
 import * as React from 'react';
 import { IParty } from '../../types';
@@ -31,15 +31,16 @@ const styles = createStyles({
     width: '100%',
     marginLeft: 'auto',
     marginRight: 'auto',
-    padding: 24,
+    padding: 12,
     '@media (min-width:576px)': {
-      maxWidth: 540,
+      maxWidth: 'none',
+      padding: 24,
     },
     '@media (min-width:760px)': {
-      maxWidth: 720,
+      maxWidth: 'none',
     },
     '@media (min-width:992px)': {
-      maxWidth: 960,
+      maxWidth: 'none',
     },
     '@media (min-width:1200px)': {
       maxWidth: 1056,

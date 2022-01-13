@@ -28,7 +28,7 @@ namespace DataModeling.Tests
 
         [Theory]
         [InlineData("Seres/HvemErHvem.xsd", "Seres/HvemErHvem.xml")]
-        [InlineData("Model/XmlSchema/SeresNillable.xsd", "")]
+        [InlineData("Model/XmlSchema/Seres/SeresNillable.xsd", "")]
         [InlineData("Seres/schema_3473_201512_forms_3123_37927.xsd", "")]
         [InlineData("Seres/schema_4008_180226_forms_4186_37199.xsd", "")]
         [InlineData("Seres/schema_3919_2_forms_4623_39043.xsd", "")]
@@ -40,6 +40,7 @@ namespace DataModeling.Tests
         [InlineData("Seres/schema_4582_2000_forms_5244_42360.xsd", "")]
         [InlineData("Seres/schema_5064_1_forms_5793_42882.xsd", "")]
         [InlineData("Seres/schema_5259_1_forms_9999_50000.xsd", "")]
+        [InlineData("Seres/schema_4956_1_forms_5692_42617.xsd", "")]
         public async Task ConvertSeresXsd_SeresGeneratedXsd_ShouldConvertToJsonSchemaAndBackToXsd(string xsdSchemaPath, string xmlPath)
         {
             JsonSchemaKeywords.RegisterXsdKeywords();

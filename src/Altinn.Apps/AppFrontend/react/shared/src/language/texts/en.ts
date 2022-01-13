@@ -1,4 +1,4 @@
-/* tslint:disable:max-line-length */
+
 // eslint-disable-next-line import/prefer-default-export
 export function en() {
   return {
@@ -120,6 +120,15 @@ export function en() {
     },
     group: {
       row_error: 'One of the rows is incorrectly filled out. This has to bee fixed before the schema can be submitted.',
+    },
+    instance_selection: {
+      changed_by: 'Changed by',
+      continue: 'Continue here',
+      description: 'Choose if you want to continue on an existing form, or if you want to start on a new one.',
+      header: 'You have already started filling out this form.',
+      last_changed: 'Last changed',
+      left_of: 'Continue where you left of',
+      new_instance: 'Start over',
     },
     instantiate: {
       all_forms: 'all forms',
