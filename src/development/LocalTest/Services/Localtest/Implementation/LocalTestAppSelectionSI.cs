@@ -29,7 +29,7 @@ namespace LocalTest.Services.Localtest.Implementation
             if (string.IsNullOrEmpty(app))
                 return null;
 
-            return $"{_appRepsitoryBasePath.TrimEnd('/').TrimEnd('\\')}/{app}/App/";
+            return System.IO.Path.Combine(_appRepsitoryBasePath, app, "App");
         }
     }
 }

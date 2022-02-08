@@ -49,7 +49,7 @@ namespace Altinn.Platform.Storage.Repository
 
         private string GetTextPath(string language, string app)
         {
-            return _localTestAppSelectionService.GetAppPath(app) + $"config/texts/resource.{language.AsFileName()}.json";
+            return Path.Combine(_localTestAppSelectionService.GetAppPath(app), $"config/texts/resource.{language.AsFileName()}.json");
         }
 
         /// <inheritdoc/>

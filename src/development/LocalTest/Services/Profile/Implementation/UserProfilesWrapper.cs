@@ -28,7 +28,7 @@ namespace LocalTest.Services.Profile.Implementation
         public async Task<UserProfile> GetUser(int userId)
         {
             UserProfile user = null;
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Profile/User/" + userId + ".json";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Profile", "User", $"{userId}.json");
             if (File.Exists(path))
             {
                 string content = File.ReadAllText(path);

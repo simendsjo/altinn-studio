@@ -42,7 +42,7 @@ namespace LocalTest.Services.Authorization.Implementation
 
         private string GetPartyListPath(int userId)
         {
-            return _localPlatformSettings.LocalTestingStaticTestDataPath + _localPlatformSettings.AuthorizationDataFolder + _localPlatformSettings.PartyListFolder + userId + ".json";
+            return Path.Combine(_localPlatformSettings.LocalTestingStaticTestDataPath, _localPlatformSettings.AuthorizationDataFolder, _localPlatformSettings.PartyListFolder, $"{userId}.json");
         }
     }
 }

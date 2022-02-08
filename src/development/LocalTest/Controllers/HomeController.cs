@@ -186,7 +186,7 @@ namespace LocalTest.Controllers
         private async Task<List<UserProfile>> GetTestUsers()
         {
             List<UserProfile> users = new List<UserProfile>();
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Profile/User/";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Profile", "User");
 
             if (!Directory.Exists(path))
             {

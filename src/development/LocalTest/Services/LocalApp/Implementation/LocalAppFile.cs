@@ -31,7 +31,7 @@ namespace LocalTest.Services.LocalApp.Implementation
 
         public async Task<Application?> GetApplicationMetadata(string appId)
         {
-            var filename = Path.Join(GetAppPath(appId), $"App/config/applicationmetadata.json");
+            var filename = Path.Join(GetAppPath(appId), "App", "config", "applicationmetadata.json");
             if (File.Exists(filename))
             {
                 var content = await File.ReadAllTextAsync(filename, Encoding.UTF8);
@@ -81,7 +81,10 @@ namespace LocalTest.Services.LocalApp.Implementation
         }
         private string GetAppPath(string appId)
         {
-            return Path.Join(_localPlatformSettings.AppRepositoryBasePath, appId.Split('/').Last());
+            var appPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(appId))
+                .Split(Path.DirectorySeparatorChar)
+                .Last();
+            return Path.Join(_localPlatformSettings.AppRepositoryBasePath, appPath);
         }
     }
 }

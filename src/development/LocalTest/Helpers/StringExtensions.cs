@@ -11,15 +11,24 @@ namespace LocalTest.Helpers
     {
         /// <summary>
         /// Sanitize the input as a file name.
+        /// Replaces Path.DirectorySeparatorPath with '_' and other invalid characters (according to Path.GetInvalidFileNameChars()) as '-'.
         /// </summary>
         /// <param name="input">The input variable to be sanitized</param>
-        /// <param name="throwExceptionOnInvalidCharacters">Throw exception instead of replacing invalid characters with '-'</param>
+        /// <param name="extension">Appends ".{extension}" to the result if non-null</param>
+        /// <param name="throwExceptionOnInvalidCharacters">Throw exception instead of replacing invalid characters</param>
         /// <returns></returns>
-        public static string AsFileName(this string input, bool throwExceptionOnInvalidCharacters = true)
+        public static string AsFileName(this string input, string extension = null, bool throwExceptionOnInvalidCharacters = true)
         {
             if (string.IsNullOrWhiteSpace(input))
             {
                 return input;
+            }
+
+            // DirectorySeparator is invalid in a filename, but many places want to use '_'
+            // rather than the default '-'
+            if (!throwExceptionOnInvalidCharacters)
+            {
+                input = input.Replace(Path.DirectorySeparatorChar, '_');
             }
 
             char[] illegalFileNameCharacters = Path.GetInvalidFileNameChars();
@@ -43,7 +52,10 @@ namespace LocalTest.Helpers
                return "-";
             }
 
-            return illegalFileNameCharacters.Aggregate(input, (current, c) => current.Replace(c, '-'));
+            var sanitized = illegalFileNameCharacters.Aggregate(input, (current, c) => current.Replace(c, '-'));
+            return extension != null
+                ? $"{sanitized}.{extension}"
+                : sanitized;
         }
     }
 }

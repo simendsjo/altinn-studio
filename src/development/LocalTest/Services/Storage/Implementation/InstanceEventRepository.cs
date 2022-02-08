@@ -1,6 +1,7 @@
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.Platform.Storage.Repository;
 using LocalTest.Configuration;
+using LocalTest.Helpers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -49,12 +50,12 @@ namespace LocalTest.Services.Storage.Implementation
 
         private string GetInstanceEventPath(string instanceId, Guid instanceEventID)
         {
-            return GetInstanceEventFolder() + instanceId.Replace("/", "_") + "_" + instanceEventID.ToString() + ".json";
+            return Path.Combine(GetInstanceEventFolder(), $"{instanceId.AsFileName()}_{instanceEventID}.json");
         }
 
         private string GetInstanceEventFolder()
         {
-            return _localPlatformSettings.LocalTestingStorageBasePath + _localPlatformSettings.DocumentDbFolder + _localPlatformSettings.InstanceEventsCollectionFolder;
+            return Path.Combine(_localPlatformSettings.LocalTestingStorageBasePath, _localPlatformSettings.DocumentDbFolder, _localPlatformSettings.InstanceEventsCollectionFolder);
         }
     }
 }

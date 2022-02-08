@@ -31,7 +31,7 @@ namespace LocalTest.Services.Register.Implementation
         public async Task<Party> GetParty(int partyId)
         {
             Party party = null;
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Register/Party/" + partyId + ".json";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Register", "Party", $"{partyId}.json");
             if (File.Exists(path))
             {
                 string content = File.ReadAllText(path);
@@ -53,7 +53,7 @@ namespace LocalTest.Services.Register.Implementation
         /// <inheritdoc />
         public async Task<Party> LookupPartyBySSNOrOrgNo(string lookupValue)
         {
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Register/Party";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Register", "Party");
             string[] allPathsToParties = Directory.GetFiles(path);
 
             foreach (string partyPath in allPathsToParties)
@@ -75,7 +75,7 @@ namespace LocalTest.Services.Register.Implementation
         /// <inheritdoc />
         public async Task<int> LookupPartyIdBySSNOrOrgNo(string lookupValue)
         {
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Register/Party";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Register", "Party");
             string[] allPathsToOrgs = Directory.GetFiles(path);
 
             foreach (string orgPath in allPathsToOrgs)

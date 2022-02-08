@@ -49,8 +49,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 this._localPlatformSettings.LocalTestingStaticTestDataPath,
                 this._localPlatformSettings.AuthorizationDataFolder,
                 this._localPlatformSettings.RolesFolder,
-                $"User_{userId}/",
-                $"party_{resourcePartyId}/",
+                $"User_{userId}",
+                $"party_{resourcePartyId}",
                 "roles.json"
             };
             return Path.Combine(pathArray);

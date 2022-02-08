@@ -8,7 +8,7 @@ using Altinn.Platform.Storage.Interface.Models;
 using Altinn.Platform.Storage.Repository;
 
 using LocalTest.Configuration;
-
+using LocalTest.Helpers;
 using Microsoft.Extensions.Options;
 
 using Newtonsoft.Json;
@@ -107,22 +107,22 @@ namespace LocalTest.Services.Storage.Implementation
 
         private string GetFilePath(string fileName)
         {
-            return _localPlatformSettings.LocalTestingStorageBasePath + _localPlatformSettings.BlobStorageFolder + fileName;
+            return Path.Combine(_localPlatformSettings.LocalTestingStorageBasePath, _localPlatformSettings.BlobStorageFolder, fileName);
         }
 
         private string GetDataPath(string instanceId, string dataId)
         {
-            return Path.Combine(GetDataForInstanceFolder(instanceId) + dataId.Replace("/", "_") + ".json");
+            return Path.Combine(GetDataForInstanceFolder(instanceId) + dataId.AsFileName("json"));
         }
 
         private string GetDataForInstanceFolder(string instanceId)
         {
-            return Path.Combine(GetDataCollectionFolder() + instanceId.Replace("/", "_") + "/"); 
+            return Path.Combine(GetDataCollectionFolder() + instanceId.AsFileName()); 
         }
 
         private string GetDataCollectionFolder()
         {
-            return this._localPlatformSettings.LocalTestingStorageBasePath + this._localPlatformSettings.DocumentDbFolder + this._localPlatformSettings.DataCollectionFolder;
+            return Path.Combine(this._localPlatformSettings.LocalTestingStorageBasePath, this._localPlatformSettings.DocumentDbFolder, this._localPlatformSettings.DataCollectionFolder);
         }
 
         private static async Task<string> ReadFileAsString(string path)

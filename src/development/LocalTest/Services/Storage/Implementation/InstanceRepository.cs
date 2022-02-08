@@ -3,6 +3,7 @@ using Altinn.Platform.Storage.Interface.Models;
 using Altinn.Platform.Storage.Repository;
 
 using LocalTest.Configuration;
+using LocalTest.Helpers;
 using LocalTest.Services.Localtest.Interface;
 
 using Microsoft.Extensions.Options;
@@ -18,6 +19,10 @@ using System.Threading.Tasks;
 
 namespace LocalTest.Services.Storage.Implementation
 {
+    public class StringPathExtension
+    {
+    }
+
     public class InstanceRepository : IInstanceRepository
     {
         private readonly LocalPlatformSettings _localPlatformSettings;
@@ -66,7 +71,7 @@ namespace LocalTest.Services.Storage.Implementation
 
         public async Task<Instance> GetOne(string instanceId, int instanceOwnerPartyId)
         {
-            string path = GetInstancePath(instanceId.Replace("/", "_"));
+            string path = GetInstancePath(instanceId.AsFileName());
             if (File.Exists(path))
             {
                 string content = File.ReadAllText(path);
@@ -223,12 +228,12 @@ namespace LocalTest.Services.Storage.Implementation
 
         private string GetInstancePath(string instanceId)
         {
-            return Path.Combine(GetInstanceFolder() + instanceId.Replace("/", "_") + ".json");
+            return Path.Combine(GetInstanceFolder() + instanceId.AsFileName("json"));
         }
 
         private string GetInstanceFolder()
         {
-            return this._localPlatformSettings.LocalTestingStorageBasePath + this._localPlatformSettings.DocumentDbFolder + this._localPlatformSettings.InstanceCollectionFolder;
+            return Path.Combine(this._localPlatformSettings.LocalTestingStorageBasePath, this._localPlatformSettings.DocumentDbFolder, this._localPlatformSettings.InstanceCollectionFolder);
         }
 
         private static void PreProcess(Instance instance)

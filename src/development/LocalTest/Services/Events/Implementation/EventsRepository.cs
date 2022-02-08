@@ -49,9 +49,7 @@ namespace LocalTest.Services.Events.Implementation
 
         private string GetEventsCollectionFolder()
         {
-            return _localPlatformSettings.LocalTestingStorageBasePath +
-                   _localPlatformSettings.DocumentDbFolder +
-                   _localPlatformSettings.EventsCollectionFolder;
+            return Path.Combine(_localPlatformSettings.LocalTestingStorageBasePath, _localPlatformSettings.DocumentDbFolder, _localPlatformSettings.EventsCollectionFolder);
         }
     }
 }

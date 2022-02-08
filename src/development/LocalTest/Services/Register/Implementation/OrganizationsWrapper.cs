@@ -24,7 +24,7 @@ namespace LocalTest.Services.Register.Implementation
         public async Task<Organization> GetOrganization(string orgNr)
         {
             Organization org = null;
-            string path = this._localPlatformSettings.LocalTestingStaticTestDataPath + "Register/Org/" + orgNr + ".json";
+            string path = Path.Combine(this._localPlatformSettings.LocalTestingStaticTestDataPath, "Register", "Org", $"{orgNr}.json");
             if (File.Exists(path)) // lgtm [cs/path-injection]
             {
                 string content = File.ReadAllText(path); // lgtm [cs/path-injection]
